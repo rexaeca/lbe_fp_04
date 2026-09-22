@@ -1,19 +1,16 @@
-# Gunakan image Nginx berbasis Alpine yang sangat ringan
 FROM nginx:alpine
 
-# Hapus konfigurasi default bawaan Nginx
-RUN rm /etc/nginx/conf.d/default.conf
+# Replace the default nginx site config with one that listens on 8080
+RUN rm -f /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/nginx.conf
 
-# Salin konfigurasi Nginx kustom yang sudah dibuat
-COPY nginx.conf /etc/nginx/conf.d/
+# Copy the static game files
+COPY app/ /usr/share/nginx/html/
 
-# Salin semua file web (HTML, CSS, JS) ke dalam direktori root Nginx
-COPY index.html /usr/share/nginx/html/
-COPY style.css /usr/share/nginx/html/
-COPY script.js /usr/share/nginx/html/
+# Entrypoint script injects the VM's hostname into config.js at container start
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-# Ekspos port 80 (port standar HTTP)
-EXPOSE 80
+EXPOSE 8080
 
-# Jalankan Nginx di foreground
-CMD ["nginx", "-g", "daemon off;"]
+ENTRYPOINT ["/entrypoint.sh"]
